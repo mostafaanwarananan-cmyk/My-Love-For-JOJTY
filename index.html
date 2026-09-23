@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة القلوب 💖</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: linear-gradient(135deg, #ffe6e6, #ffb3b3);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: 600px;
+            max-height: 800px;
+            background: rgba(255, 255, 255, 0.4);
+            border: 4px solid #ff4d6d;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        #score-board {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff4d6d;
+            background: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            z-index: 10;
+        }
+        .heart {
+            position: absolute;
+            font-size: 35px;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s;
+        }
+        #basket {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 50px;
+            width: 80px;
+            height: 80px;
+            text-align: center;
+            line-height: 80px;
+            cursor: pointer;
+            touch-action: none;
+        }
+        /* واجهة الرسالة النهائية */
+        #message-screen {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 77, 109, 0.95);
+            color: white;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            z-index: 20;
+            animation: fadeIn 1s ease-in-out;
+        }
+        #message-screen h1 {
+            font-size: 40px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        #message-screen p {
+            font-size: 24px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="score-board">القلوب: <span id="score">0</span> / 10</div>
+        <div id="basket">🧺</div>
+
+        <!-- شاشة الرسالة النهائية (مخفية في البداية) -->
+        <div id="message-screen">
+            <h1>لقد فزت! 💖 🎉</h1>
+            <!-- اشطررر كتكوتة في الدنيا كلها ينااااس -->
+            <p id="final-message"> يا كل دنيتي وحياتي ربنا يخليكي ليا دايما ونفضل مع بعض العمر كله يا احلي واغلي انسانة في قلبي\nوانا محظوظ بوجودك معايا ومقدرش اعيش من غيرك وبحبك اكتر من اي حاجة في الدنيا دي كلها\nانتي اجمل حاجة حصلت في حياتي كلها💝</p>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('game-container');
+        const basket = document.getElementById('basket');
+        const scoreDisplay = document.getElementById('score');
+        const messageScreen = document.getElementById('message-screen');
+        const finalMessage = document.getElementById('final-message');
+
+        let score = 0;
+        let gameActive = true;
+        const targetScore = 10; // عدد النقاط المطلوبة للفوز
+
+        // تحريك السلة مع حركة الماوس أو اللمس على الهاتف
+        function moveBasket(xPos) {
+            if (!gameActive) return;
+            const containerRect = container.getBoundingClientRect();
+            let relativeX = xPos - containerRect.left;
+            
+            // إبقاء السلة داخل حدود اللعبة
+            if (relativeX < 40) relativeX = 40;
+            if (relativeX > containerRect.width - 40) relativeX = containerRect.width - 40;
+            
+            basket.style.left = relativeX + 'px';
+        }
+
+        container.addEventListener('mousemove', (e) => moveBasket(e.clientX));
+        container.addEventListener('touchmove', (e) => {
+            moveBasket(e.touches[0].clientX);
+        });
+
+        // إنشاء القلوب المتساقطة
+        function createHeart() {
+            if (!gameActive) return;
+
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.innerHTML = '❤️';
+            
+            // مكان عشوائي للظهور أفقياً
+            const randomX = Math.random() * (container.clientWidth - 40);
+            heart.style.left = randomX + 'px';
+            heart.style.top = '-50px';
+            container.appendChild(heart);
+
+            let topPos = -50;
+            const speed = Math.random() * 3 + 2; // سرعة سقوط عشوائية
+
+            function fall() {
+                if (!gameActive) {
+                    heart.remove();
+                    return;
+                }
+
+                topPos += speed;
+                heart.style.top = topPos + 'px';
+
+                // فحص التصادم مع السلة
+                const heartRect = heart.getBoundingClientRect();
+                const basketRect = basket.getBoundingClientRect();
+
+                if (
+                    heartRect.bottom >= basketRect.top &&
+                    heartRect.right >= basketRect.left &&
+                    heartRect.left <= basketRect.right &&
+                    heartRect.bottom <= basketRect.bottom + 20
+                ) {
+                    score++;
+                    scoreDisplay.innerText = score;
+                    heart.remove();
+                    checkWin();
+                    return;
+                }
+
+                // حذف القلب إذا نزل تحت الشاشة دون تجميعه
+                if (topPos > container.clientHeight) {
+                    heart.remove();
+                } else {
+                    requestAnimationFrame(fall);
+                }
+            }
+
+            requestAnimationFrame(fall);
+        }
+
+        // تشغيل توليد القلوب كل ثانية
+        const spawnInterval = setInterval(createHeart, 1000);
+
+        // فحص الفوز باللعبة
+        function checkWin() {
+            if (score >= targetScore) {
+                gameActive = false;
+                clearInterval(spawnInterval);
+                // إظهار الرسالة الرومانسية المخصصة
+                messageScreen.style.display = 'flex';
+            }
+        }
+    </script>
+</body>
+</html>
